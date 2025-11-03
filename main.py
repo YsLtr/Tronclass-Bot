@@ -59,6 +59,5 @@ while True:
     elif res.status_code != 200:
         print("失去连接，请重新登录。")
         break
-    time.sleep(interval)
 
 driver.quit()
