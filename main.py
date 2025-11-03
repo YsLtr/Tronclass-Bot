@@ -3,12 +3,7 @@
 import time
 import json
 import requests
-from tkinter import Tk, Label
-from PIL import ImageTk, Image
 from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 from parse_rollcalls import parse_rollcalls
 from login import login
@@ -67,7 +62,7 @@ while True:
                     if not parse_rollcalls(temp_data, verified_cookies):
                         temp_data = {'rollcalls': []}
         except Exception as e:
-            print(time.strftime("%H:%M:%S", time.localtime()), ":发生错误",e)
+            print(time.strftime("%H:%M:%S", time.localtime()), ":发生错误", e)
 
     elif res.status_code != 200:
         print("失去连接，请重新登录。")
