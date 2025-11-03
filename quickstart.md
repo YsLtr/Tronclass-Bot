@@ -3,14 +3,16 @@
 1. 项目概况
 
     `main.py`: 主程序。主要处理登录与签到的监控。
+    
+    `login.py`: 用于登录的模块。
 
     `parse_rollcalls.py`: 用于解析签到任务的模块。
 
-    `send_code.py`: 用于遍历、发送验证码的模块。
+    `verify.py`: 用于数字签到、雷达签到的模块。
 
-    `config.json`: 配置文件。存储用户账号信息与[Server酱](https://sc3.ft07.com/)的sendkey。
+    `config.json`: 配置文件。存储用户账号信息。
    
-    > `main.py`登录，启动监控 → 监测到签到任务 → `parse_rollcalls.py`解析任务信息 → `send_code.py`遍历并发送签到码 → 完成签到。
+    > `main.py`登录，启动监控 → 监测到签到任务 → `parse_rollcalls.py`解析任务信息 → `verify.py`遍历并发送签到码 → 完成签到。
 
 
 2. 环境准备

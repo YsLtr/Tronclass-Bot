@@ -1,6 +1,4 @@
 requests
 pillow
 selenium
-serverchan-sdk
-PyQt6
 aiohttp
