@@ -14,7 +14,6 @@ with open("config.json") as f:
     password = config["password"]
 
 api_url = "https://lnt.xmu.edu.cn/api/radar/rollcalls"
-interval = 1.5
 
 chrome_options = Options()
 # chrome_options.add_argument("--start-maximized")   # 有头调试
