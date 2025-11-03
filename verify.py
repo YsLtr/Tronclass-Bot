@@ -1,9 +1,7 @@
 import uuid
-import threading
 import requests
 import json
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import asyncio
 import aiohttp
 
