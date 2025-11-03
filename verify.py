@@ -4,34 +4,17 @@ import requests
 import json
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import asyncio
+import aiohttp
 
 with open("config.json") as f:
     config = json.load(f)
-    sendkey = config["sendkey"]
 
 def pad(i):
     return str(i).zfill(4)
 
 def send_code(driver, rollcall_id):
-    stop_flag = threading.Event()
     url = f"https://lnt.xmu.edu.cn/api/rollcall/{rollcall_id}/answer_number_rollcall"
-
-    def put_request(i, headers, cookies):
-        if stop_flag.is_set():
-            return None
-        payload = {
-            "deviceId": str(uuid.uuid1()),
-            "numberCode": pad(i)
-        }
-        try:
-            r = requests.put(url, json=payload, headers=headers, cookies=cookies, timeout=5)
-            if r.status_code == 200:
-                stop_flag.set()
-                return pad(i)
-        except Exception as e:
-            pass
-        return None
-
     headers = {
         "User-Agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36 Edg/141.0.0.0",
         "Content-Type": "application/json"
@@ -40,18 +23,43 @@ def send_code(driver, rollcall_id):
     cookies = {c['name']: c['value'] for c in cookies_list}
     print("正在遍历签到码...")
     t00 = time.time()
-    with ThreadPoolExecutor(max_workers=200) as executor:
-        futures = [executor.submit(put_request, i, headers, cookies) for i in range(10000)]
-        for f in as_completed(futures):
-            res = f.result()
-            if res is not None:
-                print("签到码:", res)
-                t01 = time.time()
-                print("用时: %.2f 秒" % (t01 - t00))
-                return True
-    t01 = time.time()
-    print("失败。\n用时: %.2f 秒" % (t01 - t00))
-    return False
+
+    async def put_request(i, session, stop_flag, url, headers):
+        if stop_flag.is_set():
+            return None
+        payload = {
+            "deviceId": str(uuid.uuid1()),
+            "numberCode": pad(i)
+        }
+        try:
+            async with session.put(url, json=payload, timeout=5) as r:
+                if r.status == 200:
+                    stop_flag.set()
+                    return pad(i)
+        except Exception:
+            pass
+        return None
+
+    async def main():
+        # Convert cookies dict to CookieJar for aiohttp
+        jar = aiohttp.CookieJar()
+        for k, v in cookies.items():
+            jar.update_cookies({k: v})
+        stop_flag = asyncio.Event()
+        async with aiohttp.ClientSession(headers=headers, cookie_jar=jar) as session:
+            tasks = [put_request(i, session, stop_flag, url, headers) for i in range(10000)]
+            for coro in asyncio.as_completed(tasks):
+                res = await coro
+                if res is not None:
+                    print("签到码:", res)
+                    t01 = time.time()
+                    print("用时: %.2f 秒" % (t01 - t00))
+                    return True
+        t01 = time.time()
+        print("失败。\n用时: %.2f 秒" % (t01 - t00))
+        return False
+
+    return asyncio.run(main())
 
 def send_radar(driver, rollcall_id):
     url = f"https://lnt.xmu.edu.cn/api/rollcall/{rollcall_id}/answer?api_version=1.76"

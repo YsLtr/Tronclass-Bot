@@ -1,5 +1,4 @@
 import time
-import json
 from verify import send_code, send_radar
 
 def decode_rollcall(data):
@@ -29,7 +28,7 @@ def decode_rollcall(data):
 def parse_rollcalls(data, driver):
     count, rollcalls = decode_rollcall(data)
     if count:
-        print(time.strftime("%H:%M:%S", time.localtime()),f"监测到新的签到活动。\n")
+        print(time.strftime("%H:%M:%S", time.localtime()), f"监测到新的签到活动。\n")
         for i in range(count):
             print(f"第 {i+1} 个，共 {count} 个：")
             print(f"课程名称：{rollcalls[i]['course_title']}")
@@ -37,6 +36,7 @@ def parse_rollcalls(data, driver):
             print(f"签到状态：{rollcalls[i]['rollcall_status']}")
             print(f"是否计分：{rollcalls[i]['scored']}")
             print(f"出勤情况：{rollcalls[i]['status']}")
+
             if rollcalls[i]['is_radar'] & rollcalls[i]['is_number']:
                 temp_str = "数字及雷达签到"
             elif rollcalls[i]['is_radar']:
@@ -44,23 +44,25 @@ def parse_rollcalls(data, driver):
             else:
                 temp_str = "数字签到"
             print(f"签到类型：{temp_str}\n")
-            if (rollcalls[i]['status'] == 'absent') & (rollcalls[i]['is_number']) & (not rollcalls[i]['is_radar']):
-                if send_code(driver, rollcalls[i]['rollcall_id']):
-                    print("签到成功！")
-                    return True
-                else:
-                    print("签到失败。")
-                    return False
+
+            if rollcalls[i]['status'] == 'absent':
+                if rollcalls[i]['is_number']:
+                    if send_code(driver, rollcalls[i]['rollcall_id']):
+                        print("签到成功！")
+                        return True
+                    else:
+                        print("签到失败。")
+                        return False
+                elif rollcalls[i]['is_radar']:
+                    if send_radar(driver, rollcalls[i]['rollcall_id']):
+                        print("签到成功！")
+                        return True
+                    else:
+                        print("签到失败。")
+                        return False
             elif rollcalls[i]['status'] == 'on_call_fine':
                 print("该签到已完成。")
                 return True
-            elif rollcalls[i]['is_radar']:
-                if send_radar(driver, rollcalls[i]['rollcall_id']):
-                    print("签到成功！")
-                    return True
-                else:
-                    print("签到失败。")
-                    return False
             else:
                 return False
     else:
