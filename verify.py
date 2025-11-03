@@ -39,7 +39,6 @@ def send_code(driver, rollcall_id):
         return None
 
     async def main():
-        # Convert cookies dict to CookieJar for aiohttp
         jar = aiohttp.CookieJar()
         for k, v in cookies.items():
             jar.update_cookies({k: v})
