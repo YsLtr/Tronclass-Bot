@@ -25,17 +25,14 @@
    
 3. 配置文件
 
-    在 `config.json` 中的对应位置填入账号、密码、Server酱的sendkey（可不填）。
+    在 `config.json` 中的对应位置填入账号、密码, 不填或填错将自动进入扫码签到。
 
     ```json
     {
         "username": "账号",
-        "password": "密码",
-        "sendkey": "sendkey"
+        "password": "密码"
     }
     ```
-
-    > 账号密码请确认填写准确。
    
 4. 运行程序
     
