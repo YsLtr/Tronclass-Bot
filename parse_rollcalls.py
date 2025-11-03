@@ -25,7 +25,7 @@ def decode_rollcall(data):
         rollcall_count = 0
     return rollcall_count, result
 
-def parse_rollcalls(data, driver):
+def parse_rollcalls(data, verified_cookies):
     count, rollcalls = decode_rollcall(data)
     if count:
         print(time.strftime("%H:%M:%S", time.localtime()), f"监测到新的签到活动。\n")
@@ -47,14 +47,14 @@ def parse_rollcalls(data, driver):
 
             if rollcalls[i]['status'] == 'absent':
                 if rollcalls[i]['is_number']:
-                    if send_code(driver, rollcalls[i]['rollcall_id']):
+                    if send_code(rollcalls[i]['rollcall_id'], verified_cookies):
                         print("签到成功！")
                         return True
                     else:
                         print("签到失败。")
                         return False
                 elif rollcalls[i]['is_radar']:
-                    if send_radar(driver, rollcalls[i]['rollcall_id']):
+                    if send_radar(rollcalls[i]['rollcall_id'], verified_cookies):
                         print("签到成功！")
                         return True
                     else:
