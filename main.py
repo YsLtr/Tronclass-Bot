@@ -15,13 +15,6 @@ with open("config.json") as f:
 
 api_url = "https://lnt.xmu.edu.cn/api/radar/rollcalls"
 interval = 1.5
-# fetch_script = """
-# const url = arguments[0];
-# const callback = arguments[arguments.length - 1];
-# fetch(url, {credentials: 'include'})
-#   .then(resp => resp.text().then(text => callback({status: resp.status, ok: resp.ok, text: text})))
-#   .catch(err => callback({error: String(err)}));
-# """
 
 chrome_options = Options()
 # chrome_options.add_argument("--start-maximized")   # 有头调试
@@ -37,7 +30,7 @@ print("已连接到厦大数字化教学平台。")
 ts = int(time.time() * 1000)
 temp_header = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"}
 temp_url = f"https://ids.xmu.edu.cn/authserver/checkNeedCaptcha.htl?username={username}&_={ts}"
-res_data = requests.get(temp_url, cookies={c['name']: c['value'] for c in driver.get_cookies()}, headers=temp_header).json()
+res_data = requests.get(temp_url, headers=temp_header).json()
 
 login_status, verified_cookies = login(api_url, driver, res_data['isNeed'], username, password)
 if not login_status:
@@ -45,8 +38,8 @@ if not login_status:
     driver.quit()
     exit()
 
-print("登录成功！")
-print(f"签到监控启动。")
+print("登录成功！签到监控启动。")
+
 start = time.time()
 temp_data = {'rollcalls': []}
 while True:

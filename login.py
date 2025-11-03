@@ -4,13 +4,13 @@ from tkinter import Tk, Label
 from PIL import ImageTk, Image
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support import expected_conditions as ec
 
 def login(url, driver, status, username, password):
     if not status:
         print("登录无需验证,正在登录...")
         WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.ID, "userNameLogin_a"))
+            ec.element_to_be_clickable((By.ID, "userNameLogin_a"))
         ).click()
         driver.find_element(By.ID, "username").send_keys(username)
         driver.find_element(By.ID, "password").send_keys(password)
