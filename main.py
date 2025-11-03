@@ -25,12 +25,11 @@ driver = webdriver.Chrome(options=chrome_options)
 
 # 访问登录页面,不开VPN好像连不上
 driver.get("https://lnt.xmu.edu.cn")
-print("已连接到厦大数字化教学平台。")
 
 ts = int(time.time() * 1000)
 temp_header = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"}
-temp_url = f"https://ids.xmu.edu.cn/authserver/checkNeedCaptcha.htl?username={username}&_={ts}"
-res_data = requests.get(temp_url, headers=temp_header).json()
+captcha_url = f"https://ids.xmu.edu.cn/authserver/checkNeedCaptcha.htl?username={username}&_={ts}"
+res_data = requests.get(captcha_url, headers=temp_header).json()
 
 login_status, verified_cookies = login(api_url, driver, res_data['isNeed'], username, password)
 if not login_status:
@@ -38,7 +37,7 @@ if not login_status:
     driver.quit()
     exit()
 
-print("登录成功！签到监控启动。")
+print(time.strftime("%H:%M:%S", time.localtime()), "登录成功！签到监控启动。")
 
 start = time.time()
 temp_data = {'rollcalls': []}
