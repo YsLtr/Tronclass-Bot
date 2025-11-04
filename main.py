@@ -16,8 +16,8 @@ with open("config.json") as f:
 api_url = "https://lnt.xmu.edu.cn/api/radar/rollcalls"
 
 chrome_options = Options()
-# chrome_options.add_argument("--start-maximized")   # 有头调试
-chrome_options.add_argument("--headless")  # 无头运行
+chrome_options.add_argument("--start-maximized")   # 有头调试
+# chrome_options.add_argument("--headless")  # 无头运行
 
 print("正在初始化...")
 driver = webdriver.Chrome(options=chrome_options)
@@ -40,14 +40,16 @@ print(time.strftime("%H:%M:%S", time.localtime()), "登录成功！签到监控�
 
 start = time.time()
 temp_data = {'rollcalls': []}
+count = 0
 while True:
+    if count % 30 == 0:
+        driver.get(api_url)
+        verified_cookies = {c['name']: c['value'] for c in driver.get_cookies()}
     res = requests.get(api_url, cookies=verified_cookies)
     if res.status_code == 200:
         data = res.json()
         try:
-            if temp_data == data:
-                continue
-            else:
+            if temp_data != data:
                 temp_data = data
                 if len(temp_data['rollcalls']) > 0:
                     if not parse_rollcalls(temp_data, verified_cookies):
@@ -58,5 +60,8 @@ while True:
     elif res.status_code != 200:
         print("失去连接，请重新登录。")
         break
+    count += 1
+    if count % 5 == 0:
+        time.sleep(1)
 
 driver.quit()

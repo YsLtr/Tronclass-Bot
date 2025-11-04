@@ -15,7 +15,8 @@ def login(url, driver, status, username, password):
         driver.find_element(By.ID, "username").send_keys(username)
         driver.find_element(By.ID, "password").send_keys(password)
         driver.find_element(By.ID, "login_submit").click()
-        time.sleep(1)
+        time.sleep(5)
+        driver.get(url)
         res = requests.get(url, cookies={c['name']: c['value'] for c in driver.get_cookies()})
         if res.status_code == 200:
             verified_cookies = {c['name']: c['value'] for c in driver.get_cookies()}
