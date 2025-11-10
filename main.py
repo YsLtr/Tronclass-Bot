@@ -16,8 +16,8 @@ with open("config.json") as f:
 api_url = "https://lnt.xmu.edu.cn/api/radar/rollcalls"
 
 chrome_options = Options()
-chrome_options.add_argument("--start-maximized")   # 有头调试
-# chrome_options.add_argument("--headless")  # 无头运行
+# chrome_options.add_argument("--start-maximized")   # 有头调试
+chrome_options.add_argument("--headless")  # 无头运行
 
 print("正在初始化...")
 driver = webdriver.Chrome(options=chrome_options)
