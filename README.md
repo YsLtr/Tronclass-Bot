@@ -8,6 +8,8 @@
 > 
 >我成功了。切换到[`aiohttp`分支](https://github.com/KrsMt-0113/XMU-Rollcall-Bot/tree/aiohttp)看看吧。
 
+> 欢迎加入反馈QQ群：904879205
+
 ***给个星标行吗?***
 
 使用方法在 [这里](quickstart.md) 查看
