@@ -22,6 +22,8 @@
 
 使用方法在 [这里](quickstart.md) 查看
 
+适用于 Windows 的可执行文件(.exe)已上传到[这里](https://github.com/KrsMt-0113/XMU-Rollcall-Bot/tree/main/XMUrcbot_win)，使用方法详见由 [@yt0592](https://github.com/yt0592) 撰写的[文档](XMUrcbot_win/README.md)。
+
 如果你想用最短的代码实现签到功能，请参考 [demo.md](demo.md) 。
 
 高性能分支 `performance` 已推出，请前往 [这里](https://github.com/KrsMt-0113/XMU-Rollcall-Bot/tree/aiohttp) 查看并使用。
