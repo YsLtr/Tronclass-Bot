@@ -12,6 +12,14 @@
 
 ***给个星标行吗?***
 
+## Contributors:
+
+<a href="https://github.com/KrsMt-0113/XMU-Rollcall-Bot/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=KrsMt-0113/XMU-Rollcall-Bot" />
+</a>
+
+---
+
 使用方法在 [这里](quickstart.md) 查看
 
 如果你想用最短的代码实现签到功能，请参考 [demo.md](demo.md) 。
