@@ -2,7 +2,13 @@ import uuid
 import threading
 import requests
 import time
+import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
+with open("config.json") as f:
+    config = json.load(f)
+    latitude = config["latitude"]
+    longitude = config["longitude"]
 
 def pad(i):
     return str(i).zfill(4)
@@ -60,8 +66,8 @@ def send_radar(driver, rollcall_id):
         "altitudeAccuracy": None,
         "deviceId": str(uuid.uuid1()),
         "heading": None,
-        "latitude": 24.4378,
-        "longitude": 118.0965,  # 庄汉水楼，后续加入更多位置
+        "latitude": latitude,
+        "longitude": longitude,  # 庄汉水楼，后续加入更多位置
         "speed": None
     }
     res = requests.put(url, json=payload, headers=headers, cookies={c['name']: c['value'] for c in driver.get_cookies()})

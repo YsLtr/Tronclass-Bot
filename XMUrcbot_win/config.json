@@ -1,5 +1,7 @@
 {
   "username":"_填入登录名，一般是学号_",
   "password":"_输入登录密码_",
-  "sendkey": "_这里不用动_"
+  "sendkey": "_这里不动_",
+  "latitude":"_填入纬度_",
+  "longitude":"_填入经度_"
 }
