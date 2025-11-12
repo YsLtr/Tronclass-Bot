@@ -1,5 +1,5 @@
 import time
-from verify import send_code, send_radar
+from verify_optimized import send_code_optimized_with_pool, send_radar
 
 def rc_type(is_number, is_radar):
     if is_number & is_radar:
@@ -24,7 +24,7 @@ def parse_rollcalls(data, verified_cookies):
 
         if rollcalls[i]['status'] == 'absent':
             if rollcalls[i]['is_number']:
-                if send_code(rollcalls[i]['rollcall_id'], verified_cookies):
+                if send_code_optimized_with_pool(rollcalls[i]['rollcall_id'], verified_cookies):
                     print("签到成功！")
                     return True
                 else:
