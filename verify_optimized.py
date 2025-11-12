@@ -6,6 +6,7 @@ import random
 import json
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from checkin_recorder import CheckinRecorder
 
 def pad(i):
     return str(i).zfill(4)
@@ -100,15 +101,51 @@ def send_code_optimized(rollcall_id, verified_cookies):
     if found_code[0]:
         print(f"签到成功! 签到码: {found_code[0]}")
         print(f"用时: {t01 - t00:.2f} 秒")
+        
+        # 记录成功的签到
+        try:
+            recorder = CheckinRecorder()
+            recorder.add_record(
+                course_name=course_name or "未知课程",
+                course_id=course_id,
+                rollcall_id=str(rollcall_id),
+                checkin_code=found_code[0],
+                checkin_type="数字签到",
+                success=True
+            )
+        except Exception as e:
+            print(f"[记录器] 记录签到信息时出错: {str(e)}")
+        
         return True
     else:
         print(f"签到失败。用时: {t01 - t00:.2f} 秒")
+        
+        # 记录失败的签到
+        try:
+            recorder = CheckinRecorder()
+            recorder.add_record(
+                course_name=course_name or "未知课程",
+                course_id=course_id,
+                rollcall_id=str(rollcall_id),
+                checkin_code=None,
+                checkin_type="数字签到",
+                success=False
+            )
+        except Exception as e:
+            print(f"[记录器] 记录签到信息时出错: {str(e)}")
+        
         return False
 
-def send_code_optimized_with_pool(rollcall_id, verified_cookies):
+def send_code_optimized_with_pool(rollcall_id, verified_cookies, course_name=None, course_id=None):
     """
     使用线程池优化后的数字签到函数
     使用ThreadPoolExecutor管理线程池
+    
+    Args:
+        rollcall_id: 签到活动ID
+        verified_cookies: 验证后的cookies
+        course_name: 课程名称（可选）
+        course_id: 课程ID（可选）
     """
     url = f"https://lnt.xmu.edu.cn/api/rollcall/{rollcall_id}/answer_number_rollcall"
     headers = {
@@ -209,11 +246,17 @@ def send_code_optimized_with_pool(rollcall_id, verified_cookies):
         print(f"签到失败。用时: {t01 - t00:.2f} 秒")
         return False
 
-def send_radar(rollcall_id, verified_cookies):
+def send_radar(rollcall_id, verified_cookies, course_name=None, course_id=None):
     """
     雷达签到函数
     从coordinates.json文件加载坐标，默认使用id=1的坐标
     如果一个id中有多个坐标，按顺序使用直到签到成功
+    
+    Args:
+        rollcall_id: 签到活动ID
+        verified_cookies: 验证后的cookies
+        course_name: 课程名称（可选）
+        course_id: 课程ID（可选）
     """
     # 获取当前脚本所在目录
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -279,12 +322,44 @@ def send_radar(rollcall_id, verified_cookies):
             res = requests.put(url, json=payload, headers=headers, cookies=verified_cookies, timeout=5)
             if res.status_code == 200:
                 print(f"雷达签到成功! 使用坐标: ({latitude}, {longitude})")
+                
+                # 记录成功的签到
+                try:
+                    recorder = CheckinRecorder()
+                    recorder.add_record(
+                        course_name=course_name or "未知课程",
+                        course_id=course_id,
+                        rollcall_id=str(rollcall_id),
+                        checkin_code=None,  # 雷达签到没有签到码
+                        checkin_type="雷达签到",
+                        latitude=latitude,
+                        longitude=longitude,
+                        success=True
+                    )
+                except Exception as e:
+                    print(f"[记录器] 记录签到信息时出错: {str(e)}")
+                
                 return True
         except Exception as e:
             print(f"坐标 ({latitude}, {longitude}) 签到失败: {str(e)}")
             continue
     
     print("所有坐标尝试完毕，雷达签到失败")
+    
+    # 记录失败的签到
+    try:
+        recorder = CheckinRecorder()
+        recorder.add_record(
+            course_name=course_name or "未知课程",
+            course_id=course_id,
+            rollcall_id=str(rollcall_id),
+            checkin_code=None,
+            checkin_type="雷达签到",
+            success=False
+        )
+    except Exception as e:
+        print(f"[记录器] 记录签到信息时出错: {str(e)}")
+    
     return False
 
 # 保留原始的异步版本作为备份
