@@ -1,12 +1,7 @@
 {
-  "username":"username",
-  "password":"password",
-  "browser": {
-    "type": "firefox",
-    "headless": true,
-    "window_size": [1920, 1080],
-    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-  },
+  "username": "username",
+  "password": "password",
+  "browser": "firefox",
   "performance": {
     "disable_images": true,
     "disable_plugins": true,

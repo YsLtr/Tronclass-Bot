@@ -12,13 +12,12 @@ with open("config.json", encoding='utf-8') as f:
     username = config["username"]
     password = config["password"]
     
-    # 浏览器配置
-    browser_config = config.get('browser', {})
-    browser_type = browser_config.get('type', 'chrome')
-    headless = browser_config.get('headless', True)
-    window_size = tuple(browser_config.get('window_size', [1920, 1080]))
-    user_agent = browser_config.get('user_agent', 
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+    # 浏览器配置（只读取类型，其他配置硬编码在BrowserManager中）
+    browser_config = config.get('browser', 'chrome')
+    if isinstance(browser_config, str):
+        browser_type = browser_config
+    else:
+        browser_type = browser_config.get('type', 'chrome')
     
     # 性能配置
     performance_config = config.get('performance', {})
@@ -30,12 +29,9 @@ api_url = "https://lnt.xmu.edu.cn/api/radar/rollcalls"
 # 初始化浏览器管理器
 print("正在初始化浏览器...")
 try:
-    # 创建浏览器管理器
+    # 创建浏览器管理器（只传递浏览器类型）
     browser_manager = BrowserManager({
-        'browser_type': browser_type,
-        'headless': headless,
-        'window_size': window_size,
-        'user_agent': user_agent
+        'browser': browser_type
     })
     
     # 获取浏览器驱动

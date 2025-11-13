@@ -50,7 +50,7 @@ def login(url, driver, status, username, password):
                 return True
             
             safe_element_operation(click_login_tab)
-            time.sleep(2)  # 等待页面响应
+            time.sleep(0.5)  # 等待页面响应
             
             # 安全输入用户名
             def input_username():
@@ -58,12 +58,12 @@ def login(url, driver, status, username, password):
                     ec.presence_of_element_located((By.ID, "username"))
                 )
                 username_field.clear()
-                time.sleep(0.5)  # 小延迟确保清除完成
+                time.sleep(0.2)  # 小延迟确保清除完成
                 username_field.send_keys(username)
                 return True
             
             safe_element_operation(input_username)
-            time.sleep(1)
+            time.sleep(0.2)
             
             # 安全输入密码
             def input_password():
@@ -71,12 +71,12 @@ def login(url, driver, status, username, password):
                     ec.presence_of_element_located((By.ID, "password"))
                 )
                 password_field.clear()
-                time.sleep(0.5)
+                time.sleep(0.2)
                 password_field.send_keys(password)
                 return True
             
             safe_element_operation(input_password)
-            time.sleep(1)
+            time.sleep(0.2)
             
             # 安全点击登录按钮
             def click_login_button():
@@ -90,11 +90,11 @@ def login(url, driver, status, username, password):
             
             # 等待登录处理完成
             print("等待登录处理...")
-            time.sleep(5)
+            time.sleep(1)
             
             # 重新导航到目标页面
             driver.get(url)
-            time.sleep(3)
+            time.sleep(1)
             
             # 验证登录状态
             try:

@@ -24,15 +24,23 @@ class BrowserManager:
         初始化浏览器管理器
         
         Args:
-            config: 浏览器配置字典，包含browser_type, headless等选项
+            config: 配置文件字典，包含browser字段（字符串类型）
         """
         self.config = config or {}
         self.driver = None
-        self.browser_type = self.config.get('browser_type', 'chrome').lower()
-        self.headless = self.config.get('headless', True)
-        self.window_size = self.config.get('window_size', (1920, 1080))
-        self.user_agent = self.config.get('user_agent', 
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+        
+        # 从配置文件读取浏览器类型（支持字符串或字典格式）
+        browser_config = self.config.get('browser', 'chrome')
+        if isinstance(browser_config, str):
+            self.browser_type = browser_config.lower()
+        else:
+            # 兼容旧格式（字典格式）
+            self.browser_type = browser_config.get('type', 'chrome').lower()
+        
+        # 浏览器配置参数（硬编码在代码中）
+        self.headless = True
+        self.window_size = (1920, 1080)
+        self.user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
         
         # 设置日志
         logging.basicConfig(level=logging.INFO)
@@ -42,63 +50,61 @@ class BrowserManager:
         self._check_driver_availability()
     
     def _check_driver_availability(self):
-        """检查浏览器驱动是否可用"""
+        """检查配置的浏览器驱动是否可用"""
         self.available_browsers = []
         
-        # 检查Chrome
-        try:
-            chrome_options = ChromeOptions()
-            chrome_options.add_argument('--headless=new')  # 使用新的headless模式
-            chrome_options.add_argument('--no-sandbox')
-            chrome_options.add_argument('--disable-dev-shm-usage')
-            chrome_options.add_argument('--disable-gpu')
-            chrome_options.add_argument('--disable-web-security')
-            chrome_options.add_argument('--allow-running-insecure-content')
-            chrome_options.add_argument('--disable-extensions')
-            chrome_options.add_argument('--disable-plugins')
-            
-            # Linux环境下特殊配置
-            if os.name == 'posix':  # Linux/Unix系统
-                chrome_options.add_argument('--disable-dev-shm-usage')
+        # 只检查配置中指定的浏览器类型
+        if self.browser_type == 'chrome':
+            try:
+                chrome_options = ChromeOptions()
+                chrome_options.add_argument('--headless=new')  # 使用新的headless模式
                 chrome_options.add_argument('--no-sandbox')
-                chrome_options.add_argument('--disable-setuid-sandbox')
-                chrome_options.add_argument('--single-process')
-                chrome_options.add_argument('--disable-background-timer-throttling')
-                chrome_options.add_argument('--disable-backgrounding-occluded-windows')
-                chrome_options.add_argument('--disable-renderer-backgrounding')
-            
-            test_driver = webdriver.Chrome(options=chrome_options)
-            test_driver.quit()
-            self.available_browsers.append('chrome')
-            self.logger.info("Chrome驱动可用")
-        except (WebDriverException, SessionNotCreatedException, Exception) as e:
-            self.logger.warning(f"Chrome驱动不可用: {e}")
+                chrome_options.add_argument('--disable-dev-shm-usage')
+                chrome_options.add_argument('--disable-gpu')
+                chrome_options.add_argument('--disable-web-security')
+                chrome_options.add_argument('--allow-running-insecure-content')
+                chrome_options.add_argument('--disable-extensions')
+                chrome_options.add_argument('--disable-plugins')
+                
+                # Linux环境下特殊配置
+                if os.name == 'posix':  # Linux/Unix系统
+                    chrome_options.add_argument('--disable-dev-shm-usage')
+                    chrome_options.add_argument('--no-sandbox')
+                    chrome_options.add_argument('--disable-setuid-sandbox')
+                    chrome_options.add_argument('--single-process')
+                    chrome_options.add_argument('--disable-background-timer-throttling')
+                    chrome_options.add_argument('--disable-backgrounding-occluded-windows')
+                    chrome_options.add_argument('--disable-renderer-backgrounding')
+                
+                test_driver = webdriver.Chrome(options=chrome_options)
+                test_driver.quit()
+                self.available_browsers.append('chrome')
+                self.logger.info("Chrome驱动可用")
+            except (WebDriverException, SessionNotCreatedException, Exception) as e:
+                self.logger.warning(f"Chrome驱动不可用: {e}")
+                raise RuntimeError(f"配置的Chrome浏览器驱动不可用: {e}")
         
-        # 检查Firefox
-        try:
-            firefox_options = FirefoxOptions()
-            firefox_options.add_argument('--headless')
-            
-            # Linux环境下特殊配置
-            if os.name == 'posix':  # Linux/Unix系统
-                firefox_options.set_preference("webdriver.log.file", "/dev/null")
-                firefox_options.set_preference("marionette.log.level", "FATAL")
-            
-            firefox_options.set_preference("general.useragent.override", self.user_agent)
-            test_driver = webdriver.Firefox(options=firefox_options)
-            test_driver.quit()
-            self.available_browsers.append('firefox')
-            self.logger.info("Firefox驱动可用")
-        except (WebDriverException, SessionNotCreatedException, Exception) as e:
-            self.logger.warning(f"Firefox驱动不可用: {e}")
+        elif self.browser_type == 'firefox':
+            try:
+                firefox_options = FirefoxOptions()
+                firefox_options.add_argument('--headless')
+                
+                # Linux环境下特殊配置
+                if os.name == 'posix':  # Linux/Unix系统
+                    firefox_options.set_preference("webdriver.log.file", "/dev/null")
+                    firefox_options.set_preference("marionette.log.level", "FATAL")
+                
+                firefox_options.set_preference("general.useragent.override", self.user_agent)
+                test_driver = webdriver.Firefox(options=firefox_options)
+                test_driver.quit()
+                self.available_browsers.append('firefox')
+                self.logger.info("Firefox驱动可用")
+            except (WebDriverException, SessionNotCreatedException, Exception) as e:
+                self.logger.warning(f"Firefox驱动不可用: {e}")
+                raise RuntimeError(f"配置的Firefox浏览器驱动不可用: {e}")
         
-        if not self.available_browsers:
-            raise RuntimeError("未找到可用的浏览器驱动！请安装Chrome或Firefox浏览器及其驱动。")
-        
-        # 如果配置的浏览器不可用，选择第一个可用的
-        if self.browser_type not in self.available_browsers:
-            self.browser_type = self.available_browsers[0]
-            self.logger.warning(f"配置的浏览器 {self.browser_type} 不可用，自动切换到: {self.browser_type}")
+        else:
+            raise ValueError(f"不支持的浏览器类型: {self.browser_type}")
     
     def _setup_chrome_driver(self):
         """配置Chrome浏览器驱动"""
@@ -269,27 +275,25 @@ class BrowserManager:
         self.quit_driver()
 
 # 工厂函数，便于创建浏览器管理器
-def create_browser_manager(browser_type='chrome', headless=True, **kwargs):
+def create_browser_manager(browser_type='chrome', **kwargs):
     """
     创建浏览器管理器实例
     
     Args:
         browser_type: 浏览器类型 ('chrome' 或 'firefox')
-        headless: 是否无头模式
         **kwargs: 其他配置选项
     
     Returns:
         BrowserManager: 浏览器管理器实例
     """
     config = {
-        'browser_type': browser_type,
-        'headless': headless,
+        'browser': browser_type,
         **kwargs
     }
     return BrowserManager(config)
 
 # 兼容性函数 - 模拟原有的webdriver接口
-def create_driver(browser_type='chrome', headless=True, **kwargs):
+def create_driver(browser_type='chrome', **kwargs):
     """
     创建浏览器驱动（兼容性函数）
     
@@ -297,11 +301,10 @@ def create_driver(browser_type='chrome', headless=True, **kwargs):
     
     Args:
         browser_type: 浏览器类型
-        headless: 是否无头模式
         **kwargs: 其他配置选项
     
     Returns:
         webdriver: Selenium WebDriver实例
     """
-    manager = create_browser_manager(browser_type, headless, **kwargs)
+    manager = create_browser_manager(browser_type, **kwargs)
     return manager.get_driver()
