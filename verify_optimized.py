@@ -241,9 +241,39 @@ def send_code_optimized_with_pool(rollcall_id, verified_cookies, course_name=Non
     if found_code[0]:
         print(f"签到成功! 签到码: {found_code[0]}")
         print(f"用时: {t01 - t00:.2f} 秒")
+        
+        # 记录成功的签到
+        try:
+            recorder = CheckinRecorder()
+            recorder.add_record(
+                course_name=course_name or "未知课程",
+                course_id=course_id,
+                rollcall_id=str(rollcall_id),
+                checkin_code=found_code[0],
+                checkin_type="数字签到",
+                success=True
+            )
+        except Exception as e:
+            print(f"[记录器] 记录签到信息时出错: {str(e)}")
+        
         return True
     else:
         print(f"签到失败。用时: {t01 - t00:.2f} 秒")
+        
+        # 记录失败的签到
+        try:
+            recorder = CheckinRecorder()
+            recorder.add_record(
+                course_name=course_name or "未知课程",
+                course_id=course_id,
+                rollcall_id=str(rollcall_id),
+                checkin_code=None,
+                checkin_type="数字签到",
+                success=False
+            )
+        except Exception as e:
+            print(f"[记录器] 记录签到信息时出错: {str(e)}")
+        
         return False
 
 def send_radar(rollcall_id, verified_cookies, course_name=None, course_id=None):

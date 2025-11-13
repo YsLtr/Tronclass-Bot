@@ -10,9 +10,9 @@ from verify_optimized import send_code_optimized_with_pool, send_radar
 
 def rc_type(rollcall):
     """判断签到类型"""
-    if rollcall.get('rollcall_type') == 'CodeRollcall':
+    if rollcall.get('is_number', False):
         return 'code'
-    elif rollcall.get('rollcall_type') == 'RadarRollcall':
+    elif rollcall.get('is_radar', False):
         return 'radar'
     else:
         return 'unknown'
@@ -34,13 +34,13 @@ def parse_rollcalls(rollcalls_data, verified_cookies=None):
     
     # 遍历所有签到任务
     for i, rollcall in enumerate(rollcalls_data.get('rollcalls', [])):
-        rollcall_id = rollcall.get('id')
+        rollcall_id = rollcall.get('rollcall_id')
         course_name = rollcall.get('course_title', '未知课程')
         # 使用course_id字段，如果不存在则设为None
         course_id = rollcall.get('course_id') or None
         
-        # 检查签到状态
-        status = rollcall.get('rollcall_status')
+        # 检查签到状态 - 优先使用status，否则使用rollcall_status
+        status = rollcall.get('status') or rollcall.get('rollcall_status')
         
         if status == 'absent':  # 需要签到
             print(f"[解析器] 发现需要签到的任务 {i+1}: 课程={course_name}, 类型={rc_type(rollcall)}")
