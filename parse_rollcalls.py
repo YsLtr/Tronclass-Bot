@@ -18,13 +18,14 @@ def rc_type(rollcall):
         return 'unknown'
 
 
-def parse_rollcalls(rollcalls_data):
+def parse_rollcalls(rollcalls_data, verified_cookies=None):
     """
     解析签到任务数据
     根据签到状态和类型调用相应的签到函数
     
     Args:
         rollcalls_data: 从API获取的签到任务数据
+        verified_cookies: 验证后的cookies（可选）
     
     Returns:
         list: 包含每个签到任务的处理结果的列表
@@ -47,10 +48,10 @@ def parse_rollcalls(rollcalls_data):
             # 根据签到类型调用相应函数
             if rc_type(rollcall) == 'code':
                 print(f"[解析器] 调用数字签到函数，课程: {course_name}")
-                result = send_code_optimized_with_pool(rollcall_id, rollcall, course_name, course_id)
+                result = send_code_optimized_with_pool(rollcall_id, verified_cookies, course_name, course_id)
             elif rc_type(rollcall) == 'radar':
                 print(f"[解析器] 调用雷达签到函数，课程: {course_name}")
-                result = send_radar(rollcall_id, rollcall, course_name, course_id)
+                result = send_radar(rollcall_id, verified_cookies, course_name, course_id)
             else:
                 print(f"[解析器] 未知签到类型: {rollcall.get('rollcall_type')}")
                 result = {'success': False, 'message': '未知签到类型'}

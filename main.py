@@ -3,28 +3,52 @@
 import time
 import json
 import requests
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 from parse_rollcalls import parse_rollcalls
 from login import login
 from cookie_manager import CookieManager
+from browser_manager import BrowserManager
 
 with open("config.json", encoding='utf-8') as f:
     config = json.load(f)
     username = config["username"]
     password = config["password"]
+    
+    # 浏览器配置
+    browser_config = config.get('browser', {})
+    browser_type = browser_config.get('type', 'chrome')
+    headless = browser_config.get('headless', True)
+    window_size = tuple(browser_config.get('window_size', [1920, 1080]))
+    user_agent = browser_config.get('user_agent', 
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+    
+    # 性能配置
+    performance_config = config.get('performance', {})
+    page_load_timeout = performance_config.get('page_load_timeout', 30)
+    implicit_wait = performance_config.get('implicit_wait', 10)
 
 api_url = "https://lnt.xmu.edu.cn/api/radar/rollcalls"
 
-# 初始化cookie管理器
+# 初始化cookie管理器和浏览器管理器
 cookie_manager = CookieManager()
 
-chrome_options = Options()
-# chrome_options.add_argument("--start-maximized")   # 有头调试
-chrome_options.add_argument("--headless")  # 无头运行
-
-print("正在初始化...")
-driver = webdriver.Chrome(options=chrome_options)
+print("正在初始化浏览器...")
+try:
+    # 创建浏览器管理器
+    browser_manager = BrowserManager({
+        'browser_type': browser_type,
+        'headless': headless,
+        'window_size': window_size,
+        'user_agent': user_agent
+    })
+    
+    # 获取浏览器驱动
+    driver = browser_manager.get_driver()
+    print(f"✓ {browser_type.capitalize()} 浏览器初始化成功")
+    
+except Exception as e:
+    print(f"✗ 浏览器初始化失败: {e}")
+    print("请检查是否安装了Chrome或Firefox浏览器，以及对应的WebDriver")
+    exit(1)
 
 # 尝试使用已保存的cookies
 verified_cookies = cookie_manager.get_valid_cookies()
@@ -51,7 +75,7 @@ else:
 
 if not login_status:
     print("登录失败，程序终止。")
-    driver.quit()
+    browser_manager.quit_driver()
     exit()
 
 print(time.strftime("%H:%M:%S", time.localtime()), "登录成功！签到监控启动。")
@@ -79,8 +103,12 @@ while True:
             if temp_data != data:
                 temp_data = data
                 if len(temp_data['rollcalls']) > 0:
-                    if not parse_rollcalls(temp_data, verified_cookies):
-                        temp_data = {'rollcalls': []}
+                    results = parse_rollcalls(temp_data, verified_cookies)
+                    # 检查是否有签到失败的记录
+                    failed_count = sum(1 for r in results if not r['result'].get('success', False))
+                    if failed_count > 0:
+                        print(f"签到完成，失败任务数: {failed_count}")
+                    temp_data = {'rollcalls': []}
         except Exception as e:
             print(time.strftime("%H:%M:%S", time.localtime()), ":发生错误", e)
 
@@ -123,4 +151,4 @@ while True:
     if count % 5 == 0:
         time.sleep(1)
 
-driver.quit()
+browser_manager.quit_driver()

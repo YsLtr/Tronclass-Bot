@@ -1,4 +1,16 @@
 {
-  "username":"_填入登录名，一般是学号_",
-  "password":"_输入登录密码_"
+  "username":"username",
+  "password":"password",
+  "browser": {
+    "type": "firefox",
+    "headless": true,
+    "window_size": [1920, 1080],
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+  },
+  "performance": {
+    "disable_images": true,
+    "disable_plugins": true,
+    "page_load_timeout": 30,
+    "implicit_wait": 10
+  }
 }
