@@ -93,6 +93,7 @@ class CheckinRecorder:
                    latitude: Optional[float] = None,
                    longitude: Optional[float] = None,
                    success: bool = True,
+                   distance: Optional[float] = None,
                    additional_info: Optional[Dict[str, Any]] = None) -> bool:
         """
         添加签到记录
@@ -106,6 +107,7 @@ class CheckinRecorder:
             latitude: 纬度（雷达签到时提供）
             longitude: 经度（雷达签到时提供）
             success: 签到是否成功
+            distance: 距离数据（雷达签到时提供）
             additional_info: 额外信息（可选）
             
         Returns:
@@ -130,7 +132,8 @@ class CheckinRecorder:
                         "coordinates": {
                             "latitude": latitude,
                             "longitude": longitude
-                        } if latitude is not None and longitude is not None else None
+                        } if latitude is not None and longitude is not None else None,
+                        "distance": distance
                     },
                     "additional_info": additional_info or {}
                 }

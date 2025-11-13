@@ -353,7 +353,18 @@ def send_radar(rollcall_id, verified_cookies, course_name=None, course_id=None):
         try:
             print(f"尝试坐标 {i+1}/{len(coordinates)}: ({latitude}, {longitude})")
             res = requests.put(url, json=payload, headers=headers, cookies=verified_cookies, timeout=5)
+            
+            # 解析响应中的距离数据
+            distance = None
             if res.status_code == 200:
+                try:
+                    response_data = res.json()
+                    distance = response_data.get('distance')
+                    if distance is not None:
+                        print(f"  距离: {distance:.2f} 米")
+                except Exception:
+                    print("  无法解析响应数据")
+                
                 print(f"雷达签到成功! 使用坐标: ({latitude}, {longitude})")
                 
                 # 记录成功的签到
@@ -367,31 +378,65 @@ def send_radar(rollcall_id, verified_cookies, course_name=None, course_id=None):
                         checkin_type="雷达签到",
                         latitude=latitude,
                         longitude=longitude,
-                        success=True
+                        success=True,
+                        distance=distance
                     )
                 except Exception as e:
                     print(f"[记录器] 记录签到信息时出错: {str(e)}")
                 
                 return True
+            else:
+                # 尝试解析错误响应的距离数据
+                try:
+                    error_data = res.json()
+                    distance = error_data.get('distance')
+                    if distance is not None:
+                        print(f"  距离: {distance:.2f} 米 (超出范围)")
+                except Exception:
+                    pass
+                
+                print(f"坐标 ({latitude}, {longitude}) 签到失败: HTTP {res.status_code}")
+                
+                # 记录失败的尝试
+                try:
+                    recorder = CheckinRecorder()
+                    recorder.add_record(
+                        course_name=course_name or "未知课程",
+                        course_id=course_id,
+                        rollcall_id=str(rollcall_id),
+                        checkin_code=None,
+                        checkin_type="雷达签到",
+                        latitude=latitude,
+                        longitude=longitude,
+                        success=False,
+                        distance=distance
+                    )
+                except Exception as e:
+                    print(f"[记录器] 记录失败尝试时出错: {str(e)}")
+                
         except Exception as e:
-            print(f"坐标 ({latitude}, {longitude}) 签到失败: {str(e)}")
+            print(f"坐标 ({latitude}, {longitude}) 请求失败: {str(e)}")
+            
+            # 记录请求失败的尝试
+            try:
+                recorder = CheckinRecorder()
+                recorder.add_record(
+                    course_name=course_name or "未知课程",
+                    course_id=course_id,
+                    rollcall_id=str(rollcall_id),
+                    checkin_code=None,
+                    checkin_type="雷达签到",
+                    latitude=latitude,
+                    longitude=longitude,
+                    success=False,
+                    distance=None
+                )
+            except Exception as record_error:
+                print(f"[记录器] 记录请求失败时出错: {str(record_error)}")
+            
             continue
     
     print("所有坐标尝试完毕，雷达签到失败")
-    
-    # 记录失败的签到
-    try:
-        recorder = CheckinRecorder()
-        recorder.add_record(
-            course_name=course_name or "未知课程",
-            course_id=course_id,
-            rollcall_id=str(rollcall_id),
-            checkin_code=None,
-            checkin_type="雷达签到",
-            success=False
-        )
-    except Exception as e:
-        print(f"[记录器] 记录签到信息时出错: {str(e)}")
     
     return False
 

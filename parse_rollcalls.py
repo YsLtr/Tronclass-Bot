@@ -31,6 +31,8 @@ def parse_rollcalls(rollcalls_data, verified_cookies=None):
         list: 包含每个签到任务的处理结果的列表
     """
     results = []
+    success = False
+    message = ""
 
     # 遍历所有签到任务
     for i, rollcall in enumerate(rollcalls_data.get('rollcalls', [])):
