@@ -127,12 +127,57 @@ def login(url, driver, status, username, password):
         time.sleep(2)
         
         driver.set_window_size(1920, 1080)
-        qr_img = WebDriverWait(driver, 10).until(
-            ec.presence_of_element_located((By.ID, "qr_img"))
-        )
         
-        qr_img.screenshot("cache/qr_code.png")
-        print("二维码已保存到 cache/qr_code.png")
+        # 尝试获取二维码图片，优先尝试qr_img，如果不存在则尝试invalid_img
+        try:
+            qr_img = WebDriverWait(driver, 10).until(
+                ec.presence_of_element_located((By.ID, "qr_img"))
+            )
+        except TimeoutException:
+            try:
+                qr_img = WebDriverWait(driver, 10).until(
+                    ec.presence_of_element_located((By.ID, "invalid_img"))
+                )
+            except TimeoutException:
+                raise Exception("无法找到二维码图片元素")
+        
+        # 获取二维码图片的src属性（直接下载而不是截图）
+        qr_img_url = qr_img.get_attribute("src")
+        if not qr_img_url:
+            raise Exception("无法获取二维码图片URL")
+        
+        # 确保URL是完整的
+        if qr_img_url.startswith("/"):
+            qr_img_url = driver.current_url.rsplit("/", 2)[0] + qr_img_url
+        elif not qr_img_url.startswith("http"):
+            base_url = driver.current_url.rsplit("/", 1)[0]
+            qr_img_url = base_url + "/" + qr_img_url
+        
+        # 下载二维码图片
+        headers = {
+            'User-Agent': driver.execute_script("return navigator.userAgent;"),
+            'Referer': driver.current_url
+        }
+        
+        try:
+            # 先尝试从浏览器缓存获取cookies
+            cookies = {c['name']: c['value'] for c in driver.get_cookies()}
+            
+            # 下载二维码图片
+            response = requests.get(qr_img_url, cookies=cookies, headers=headers, timeout=30)
+            response.raise_for_status()
+            
+            # 保存二维码图片
+            with open("cache/qr_code.png", "wb") as f:
+                f.write(response.content)
+            print("二维码已保存到 cache/qr_code.png")
+            
+        except requests.RequestException as e:
+            print(f"下载二维码失败: {e}")
+            # 如果下载失败，回退到截图方式
+            print("回退到截图方式...")
+            qr_img.screenshot("cache/qr_code.png")
+            print("二维码已保存到 cache/qr_code.png（截图方式）")
         
         # 显示二维码（Linux环境可能不支持GUI）
         try:
