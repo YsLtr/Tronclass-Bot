@@ -5,7 +5,6 @@ import json
 import requests
 from parse_rollcalls import parse_rollcalls
 from login import login
-from cookie_manager import CookieManager
 from browser_manager import BrowserManager
 
 with open("config.json", encoding='utf-8') as f:
@@ -28,9 +27,7 @@ with open("config.json", encoding='utf-8') as f:
 
 api_url = "https://lnt.xmu.edu.cn/api/radar/rollcalls"
 
-# 初始化cookie管理器和浏览器管理器
-cookie_manager = CookieManager()
-
+# 初始化浏览器管理器
 print("正在初始化浏览器...")
 try:
     # 创建浏览器管理器
@@ -50,28 +47,17 @@ except Exception as e:
     print("请检查是否安装了Chrome或Firefox浏览器，以及对应的WebDriver")
     exit(1)
 
-# 尝试使用已保存的cookies
-verified_cookies = cookie_manager.get_valid_cookies()
-login_status = False
+# 开始登录流程
+print("正在进行登录")
+# 访问登录页面,不开VPN好像连不上
+driver.get("https://lnt.xmu.edu.cn")
 
-if verified_cookies:
-    print("使用已保存的cookies，跳过登录")
-    login_status = True
-else:
-    print("未找到有效cookies，需要重新登录")
-    # 访问登录页面,不开VPN好像连不上
-    driver.get("https://lnt.xmu.edu.cn")
+ts = int(time.time() * 1000)
+temp_header = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:144.0) Gecko/20100101 Firefox/144.0"}
+captcha_url = f"https://ids.xmu.edu.cn/authserver/checkNeedCaptcha.htl?username={username}&_={ts}"
+res_data = requests.get(captcha_url, headers=temp_header).json()
 
-    ts = int(time.time() * 1000)
-    temp_header = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:144.0) Gecko/20100101 Firefox/144.0"}
-    captcha_url = f"https://ids.xmu.edu.cn/authserver/checkNeedCaptcha.htl?username={username}&_={ts}"
-    res_data = requests.get(captcha_url, headers=temp_header).json()
-
-    login_status, verified_cookies = login(api_url, driver, res_data['isNeed'], username, password)
-    if login_status:
-        # 保存登录后的cookies
-        cookie_manager.save_cookies(verified_cookies)
-        print("Cookies已保存")
+login_status, verified_cookies = login(api_url, driver, res_data['isNeed'], username, password)
 
 if not login_status:
     print("登录失败，程序终止。")
@@ -87,14 +73,12 @@ relogin_attempts = 0
 max_relogin_attempts = 3
 
 while True:
-    # 每30次请求刷新一次cookies
+    # 每30次请求刷新一次cookies（从浏览器获取最新cookies）
     if count % 30 == 0:
         # 如果有driver实例，则从driver获取cookies
         if 'driver' in locals() and driver:
             driver.get(api_url)
             verified_cookies = {c['name']: c['value'] for c in driver.get_cookies()}
-            # 更新保存的cookies
-            cookie_manager.save_cookies(verified_cookies)
     
     res = requests.get(api_url, cookies=verified_cookies)
     if res.status_code == 200:
@@ -117,11 +101,8 @@ while True:
         relogin_attempts += 1
         
         if relogin_attempts <= max_relogin_attempts:
-            # 清除无效的cookies
-            cookie_manager.clear_cookies()
-            
-            # 重新登录
             print(f"正在进行第{relogin_attempts}次重新登录尝试...")
+            # 重新登录
             driver.get("https://lnt.xmu.edu.cn")
             
             ts = int(time.time() * 1000)
@@ -132,9 +113,7 @@ while True:
             login_status, verified_cookies = login(api_url, driver, res_data['isNeed'], username, password)
             
             if login_status:
-                # 保存新的cookies
-                cookie_manager.save_cookies(verified_cookies)
-                print("重新登录成功，cookies已更新")
+                print("重新登录成功")
                 relogin_attempts = 0  # 重置重试计数器
                 print(time.strftime("%H:%M:%S", time.localtime()), "重新登录成功！签到监控继续。")
                 continue  # 跳过本次循环的剩余部分，直接进入下一次循环
