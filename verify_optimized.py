@@ -5,8 +5,11 @@ import threading
 import random
 import json
 import os
+import asyncio
+import aiohttp
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from checkin_recorder import CheckinRecorder
+
 
 def pad(i):
     return str(i).zfill(4)
@@ -457,3 +460,227 @@ def send_code_original(rollcall_id, verified_cookies):
         return False
 
     return asyncio.run(main())
+
+
+def send_code_hybrid(rollcall_id, verified_cookies, course_name=None, course_id=None):
+    """
+    多线程+异步IO混合并发签到函数
+    10个线程，每个线程负责1000个数字，每条线程内部并发数为20，总并发数不超过200
+    
+    Args:
+        rollcall_id: 签到活动ID
+        verified_cookies: 验证后的cookies
+        course_name: 课程名称（可选）
+        course_id: 课程ID（可选）
+    """
+    url = f"https://lnt.xmu.edu.cn/api/rollcall/{rollcall_id}/answer_number_rollcall"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36 Edg/141.0.0.0",
+        "Content-Type": "application/json"
+    }
+    cookies = verified_cookies
+    
+    print("正在使用多线程+异步IO混合算法遍历签到码...")
+    print("配置: 10个线程 × 20异步并发 = 200总并发")
+    t00 = time.time()
+    
+    # 全局停止标志和结果存储
+    global_stop_event = threading.Event()
+    found_code = [None]  # 使用列表以便在多线程中修改
+    
+    def pad(number):
+        """将数字转换为4位字符串，不足补0"""
+        return str(number).zfill(4)
+    
+    async def async_worker(session, code, thread_id, local_stop_event, semaphore):
+        """
+        异步工作函数 - 单个请求
+        """
+        # 检查停止标志
+        if global_stop_event.is_set() or local_stop_event.is_set():
+            return None
+            
+        async with semaphore:
+            # 再次检查停止标志
+            if global_stop_event.is_set() or local_stop_event.is_set():
+                return None
+                
+            payload = {
+                "deviceId": str(uuid.uuid4()),
+                "numberCode": pad(code)
+            }
+            
+            try:
+                async with session.put(url, json=payload, timeout=aiohttp.ClientTimeout(total=5)) as response:
+                    if response.status == 200:
+                        # 找到正确签到码
+                        print(f"线程 {thread_id} 找到签到码: {pad(code)}")
+                        return pad(code)
+            except Exception as e:
+                # 忽略错误，继续尝试
+                pass
+                
+            return None
+    
+    async def async_thread_main(thread_id, codes_to_try, local_stop_event):
+        """
+        单个线程的异步主函数 - 负责1000个数字
+        """
+        # 创建该线程的异步资源
+        semaphore = asyncio.Semaphore(20)  # 每个线程内部并发数限制为20
+        
+        # 直接传cookies，避免CookieJar行为差异
+        async with aiohttp.ClientSession(headers=headers, cookies=cookies) as session:
+            # 随机打乱代码顺序，避免模式化请求
+            random.shuffle(codes_to_try)
+            
+            # 创建任务列表
+            tasks = []
+            for code in codes_to_try:
+                if global_stop_event.is_set() or local_stop_event.is_set():
+                    break
+                    
+                task = asyncio.create_task(
+                    async_worker(session, code, thread_id, local_stop_event, semaphore)
+                )
+                tasks.append(task)
+            
+            # 等待第一个成功的结果
+            try:
+                for coro in asyncio.as_completed(tasks):
+                    if global_stop_event.is_set() or local_stop_event.is_set():
+                        break
+                        
+                    result = await coro
+                    if result is not None:
+                        # 找到正确签到码
+                        found_code[0] = result
+                        global_stop_event.set()  # 通知所有线程停止
+                        local_stop_event.set()   # 通知本线程停止
+                        return result
+            finally:
+                # 清理未完成的任务
+                for task in tasks:
+                    if not task.done():
+                        task.cancel()
+                # 等待所有任务结束
+                await asyncio.gather(*tasks, return_exceptions=True)
+        
+        return None
+    
+    def thread_worker(thread_id, codes_to_try):
+        """
+        线程工作函数 - 运行异步事件循环
+        """
+        # 创建线程本地停止标志
+        local_stop_event = threading.Event()
+        
+        # 创建新的事件循环
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        try:
+            # 运行异步主函数
+            result = loop.run_until_complete(
+                async_thread_main(thread_id, codes_to_try, local_stop_event)
+            )
+            
+            if result is not None:
+                print(f"线程 {thread_id} 成功完成任务")
+            else:
+                if global_stop_event.is_set():
+                    print(f"线程 {thread_id} 被其他线程中断")
+                else:
+                    print(f"线程 {thread_id} 完成所有尝试，未找到正确签到码")
+                    
+            return result
+        except Exception as e:
+            print(f"线程 {thread_id} 发生异常: {e}")
+            return None
+        finally:
+            loop.close()
+    
+    # 分配任务范围给10个线程
+    total_codes = 10000  # 0000-9999
+    num_threads = 10
+    codes_per_thread = total_codes // num_threads
+    
+    # 准备每个线程要尝试的代码范围
+    thread_tasks = []
+    for i in range(num_threads):
+        start_code = i * codes_per_thread
+        end_code = (i + 1) * codes_per_thread - 1
+        
+        # 最后一个线程处理剩余所有代码
+        if i == num_threads - 1:
+            end_code = total_codes - 1
+            
+        # 生成该线程负责的所有代码
+        codes = list(range(start_code, end_code + 1))
+        thread_tasks.append((i, codes))
+    
+    # 使用线程池执行
+    with ThreadPoolExecutor(max_workers=num_threads) as executor:
+        # 提交任务到线程池
+        future_to_thread = {
+            executor.submit(thread_worker, thread_id, codes): thread_id
+            for thread_id, codes in thread_tasks
+        }
+        
+        # 等待第一个成功的结果
+        try:
+            for future in as_completed(future_to_thread):
+                result = future.result()
+                if result is not None:
+                    # 找到正确签到码，设置全局停止标志
+                    global_stop_event.set()
+                    
+                    # 取消其他未完成的任务
+                    for f in future_to_thread:
+                        if not f.done():
+                            f.cancel()
+                    break
+        except Exception as e:
+            print(f"线程池执行异常: {e}")
+    
+    t01 = time.time()
+    
+    # 处理结果
+    if found_code[0]:
+        print(f"🎉 签到成功! 签到码: {found_code[0]}")
+        print(f"⏱️  总用时: {t01 - t00:.2f} 秒")
+        
+        # 记录成功的签到
+        try:
+            recorder = CheckinRecorder()
+            recorder.add_record(
+                course_name=course_name or "未知课程",
+                course_id=course_id,
+                rollcall_id=str(rollcall_id),
+                checkin_code=found_code[0],
+                checkin_type="数字签到",
+                success=True
+            )
+        except Exception as e:
+            print(f"[记录器] 记录签到信息时出错: {str(e)}")
+        
+        return True
+    else:
+        print(f"❌ 签到失败")
+        print(f"⏱️  总用时: {t01 - t00:.2f} 秒")
+        
+        # 记录失败的签到
+        try:
+            recorder = CheckinRecorder()
+            recorder.add_record(
+                course_name=course_name or "未知课程",
+                course_id=course_id,
+                rollcall_id=str(rollcall_id),
+                checkin_code=None,
+                checkin_type="数字签到",
+                success=False
+            )
+        except Exception as e:
+            print(f"[记录器] 记录签到信息时出错: {str(e)}")
+        
+        return False

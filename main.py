@@ -105,7 +105,7 @@ while True:
                 if len(temp_data['rollcalls']) > 0:
                     results = parse_rollcalls(temp_data, verified_cookies)
                     # 检查是否有签到失败的记录
-                    failed_count = sum(1 for r in results if not r['result'].get('success', False))
+                    failed_count = sum(1 for r in results if not r['success'])
                     if failed_count > 0:
                         print(f"签到完成，失败任务数: {failed_count}")
                     temp_data = {'rollcalls': []}
@@ -148,7 +148,8 @@ while True:
             break
     
     count += 1
+    time.sleep(1)
     if count % 5 == 0:
-        time.sleep(1)
+        time.sleep(3)
 
 browser_manager.quit_driver()
