@@ -591,11 +591,13 @@ def send_code_hybrid(rollcall_id, verified_cookies, course_name=None, course_id=
                 tasks.append(task)
             
             # 等待第一个成功的结果
-            try:
-                for coro in asyncio.as_completed(tasks):
-                    if global_stop_event.is_set() or local_stop_event.is_set():
-                        break
-                        
+            completed_tasks = []
+            
+            for coro in asyncio.as_completed(tasks):
+                if global_stop_event.is_set() or local_stop_event.is_set():
+                    break
+                    
+                try:
                     result = await coro
                     if result is not None:
                         # 找到正确签到码
@@ -603,12 +605,17 @@ def send_code_hybrid(rollcall_id, verified_cookies, course_name=None, course_id=
                         global_stop_event.set()  # 通知所有线程停止
                         local_stop_event.set()   # 通知本线程停止
                         return result
-            finally:
-                # 清理未完成的任务
-                for task in tasks:
-                    if not task.done():
-                        task.cancel()
-                # 等待所有任务结束
+                except Exception:
+                    # 忽略单个任务的异常，继续处理其他任务
+                    continue
+            
+            # 如果没有找到结果，清理剩余任务
+            for task in tasks:
+                if not task.done():
+                    task.cancel()
+                    
+            # 等待所有任务完成或被取消
+            if tasks:
                 await asyncio.gather(*tasks, return_exceptions=True)
         
         return None
