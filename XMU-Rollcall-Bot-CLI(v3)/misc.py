@@ -72,3 +72,12 @@ def p(data, session):
                 # todo: qrcode rollcall
                 print("Answering failed.")
     return answer_status
+
+def t(name):
+    if time.localtime().tm_hour < 12 & time.localtime().tm_hour >= 5:
+        greeting = "Good morning"
+    elif time.localtime().tm_hour < 18:
+        greeting = "Good afternoon"
+    else:
+        greeting = "Good evening"
+    return f"{greeting}, {name}!"

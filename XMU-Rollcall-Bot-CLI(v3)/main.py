@@ -1,6 +1,6 @@
 import time
 from login import login
-from misc import c, a
+from misc import c, a, t
 
 interval = 1
 headers = {
@@ -22,12 +22,16 @@ print("Welcome to XMU Rollcall Bot CLI!\nLogging you in...")
 session = login()
 if not session:
     exit(1)
+profile = session.get(f"{base_url}/api/profile", headers=headers).json()
+name = profile["name"]
 
 temp_data = {'rollcalls': []}
 query_count = 0
 while True:
     c()
-    print("XMU Rollcall Bot CLI is running...")
+    print("------ XMU Rollcall Bot CLI ------")
+    print("----------version 3.0.0-----------\n")
+    print(t(name),"\n")
     print(f"Local time: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}")
     print(f"Query count: {query_count}")
     time.sleep(interval)

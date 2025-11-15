@@ -65,11 +65,6 @@ def login():
     }
     res2 = s.post(login_url, headers=headers, data=data, cookies=cookies, allow_redirects=False)
     if res2.status_code == 302:
-        c()
-        personalInfo = s.get("https://ids.xmu.edu.cn/personalInfo/common/getUserConf", headers=headers).text
-        name = json.loads(personalInfo)["datas"]["cn"]
-        print(f"Welcome back, {name}.")
-        time.sleep(3)
         return s
     else:
         c()
