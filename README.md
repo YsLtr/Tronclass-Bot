@@ -1,8 +1,10 @@
 # `XMU Rollcall Bot v3.0.0`
 
-> 对应目录: `XMU-Rollcall-Bot-CLI`
+> 对应目录: `XMU-Rollcall-Bot-CLI(v3)`
 
 > **前往 [这里](https://github.com/KrsMt-0113/XMU-Rollcall-Bot/releases) 下载本工具的最新发行版。**
+
+> **[移植文档](transplant.md)**
 
 ### ***此次更新基于大家使用过程中的所有反馈.***
 
