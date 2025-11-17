@@ -3,6 +3,13 @@ import uuid, requests, time, asyncio, aiohttp, os, sys
 base_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
 file_path = os.path.join(base_dir, "info.txt")
 
+base_url = "https://lnt.xmu.edu.cn"
+
+headers = {
+    "User-Agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36 Edg/141.0.0.0",
+    "Content-Type": "application/json"
+}
+
 with open(file_path, "r", encoding="utf-8") as f:
     lines = f.readlines()
     LATITUDE = lines[2].strip()
@@ -12,11 +19,7 @@ def pad(i):
     return str(i).zfill(4)
 
 def send_code(in_session, rollcall_id):
-    url = f"https://lnt.xmu.edu.cn/api/rollcall/{rollcall_id}/answer_number_rollcall"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36 Edg/141.0.0.0",
-        "Content-Type": "application/json"
-    }
+    url = f"{base_url}/api/rollcall/{rollcall_id}/answer_number_rollcall"
     print("Trying number code...")
     t00 = time.time()
 
@@ -70,11 +73,7 @@ def send_code(in_session, rollcall_id):
     return asyncio.run(main())
 
 def send_radar(in_session, rollcall_id):
-    url = f"https://lnt.xmu.edu.cn/api/rollcall/{rollcall_id}/answer?api_version=1.76"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36 Edg/141.0.0.0",
-        "Content-Type": "application/json"
-    }
+    url = f"{base_url}/api/rollcall/{rollcall_id}/answer?api_version=1.76"
     payload = {
         "accuracy": 35,
         "altitude": 0,
