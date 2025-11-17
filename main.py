@@ -123,8 +123,8 @@ while True:
             break
     
     count += 1
-    time.sleep(1)
+    time.sleep(5)
     if count % 5 == 0:
-        time.sleep(3)
+        time.sleep(30)
 
 browser_manager.quit_driver()

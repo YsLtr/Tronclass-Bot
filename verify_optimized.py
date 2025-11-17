@@ -590,33 +590,56 @@ def send_code_hybrid(rollcall_id, verified_cookies, course_name=None, course_id=
                 )
                 tasks.append(task)
             
-            # 等待第一个成功的结果
-            completed_tasks = []
+            # 使用更安全的任务管理方式
+            if not tasks:
+                return None
+                
+            # 创建任务集合
+            pending_tasks = set(tasks)
             
-            for coro in asyncio.as_completed(tasks):
-                if global_stop_event.is_set() or local_stop_event.is_set():
-                    break
-                    
+            # 使用 asyncio.wait 替代 as_completed
+            while pending_tasks and not (global_stop_event.is_set() or local_stop_event.is_set()):
                 try:
-                    result = await coro
-                    if result is not None:
-                        # 找到正确签到码
-                        found_code[0] = result
-                        global_stop_event.set()  # 通知所有线程停止
-                        local_stop_event.set()   # 通知本线程停止
-                        return result
+                    # 等待任意任务完成
+                    done, pending = await asyncio.wait(
+                        pending_tasks, 
+                        return_when=asyncio.FIRST_COMPLETED,
+                        timeout=0.1
+                    )
+                    
+                    # 检查已完成的任务
+                    for task in done:
+                        if task.exception() is None:
+                            try:
+                                result = task.result()
+                                if result is not None:
+                                    # 找到正确签到码
+                                    found_code[0] = result
+                                    global_stop_event.set()  # 通知所有线程停止
+                                    local_stop_event.set()   # 通知本线程停止
+                                    
+                                    # 清理剩余任务
+                                    for remaining_task in pending:
+                                        remaining_task.cancel()
+                                    
+                                    return result
+                            except Exception:
+                                continue
+                        
+                    # 更新待处理任务集合
+                    pending_tasks = pending
+                    
                 except Exception:
-                    # 忽略单个任务的异常，继续处理其他任务
-                    continue
+                    # 如果等待过程中出现异常，跳过
+                    break
             
-            # 如果没有找到结果，清理剩余任务
-            for task in tasks:
+            # 如果到达这里，说明没有找到结果或被中断
+            # 清理剩余任务但不等待它们完成
+            for task in pending_tasks:
                 if not task.done():
                     task.cancel()
                     
-            # 等待所有任务完成或被取消
-            if tasks:
-                await asyncio.gather(*tasks, return_exceptions=True)
+            return None
         
         return None
     
@@ -631,6 +654,7 @@ def send_code_hybrid(rollcall_id, verified_cookies, course_name=None, course_id=
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         
+        result = None
         try:
             # 运行异步主函数
             result = loop.run_until_complete(
@@ -645,12 +669,27 @@ def send_code_hybrid(rollcall_id, verified_cookies, course_name=None, course_id=
                 else:
                     print(f"线程 {thread_id} 完成所有尝试，未找到正确签到码")
                     
-            return result
         except Exception as e:
             print(f"线程 {thread_id} 发生异常: {e}")
-            return None
         finally:
-            loop.close()
+            # 确保所有待处理的任务都被取消
+            try:
+                pending_tasks = asyncio.all_tasks(loop)
+                for task in pending_tasks:
+                    if not task.done():
+                        task.cancel()
+                
+                # 等待任务被取消（最多等待1秒）
+                if pending_tasks:
+                    loop.run_until_complete(
+                        asyncio.gather(*pending_tasks, return_exceptions=True)
+                    )
+            except Exception:
+                pass  # 忽略清理过程中的异常
+            finally:
+                loop.close()
+                
+        return result
     
     # 分配任务范围给10个线程
     total_codes = 10000  # 0000-9999
@@ -680,10 +719,14 @@ def send_code_hybrid(rollcall_id, verified_cookies, course_name=None, course_id=
         }
         
         # 等待第一个成功的结果
+        first_result = None
         try:
             for future in as_completed(future_to_thread):
                 result = future.result()
-                if result is not None:
+                if result is not None and first_result is None:
+                    # 记录第一个成功的签到码
+                    first_result = result
+                    
                     # 找到正确签到码，设置全局停止标志
                     global_stop_event.set()
                     
@@ -694,6 +737,8 @@ def send_code_hybrid(rollcall_id, verified_cookies, course_name=None, course_id=
                     break
         except Exception as e:
             print(f"线程池执行异常: {e}")
+        
+        return first_result
     
     t01 = time.time()
     
