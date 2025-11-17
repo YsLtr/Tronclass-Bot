@@ -1,14 +1,10 @@
-import uuid, requests, time, asyncio, aiohttp, os, sys
+import uuid, time, asyncio, aiohttp, os, sys
+from aiohttp import CookieJar
 
 base_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
 file_path = os.path.join(base_dir, "info.txt")
 
 base_url = "https://lnt.xmu.edu.cn"
-
-headers = {
-    "User-Agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36 Edg/141.0.0.0",
-    "Content-Type": "application/json"
-}
 
 with open(file_path, "r", encoding="utf-8") as f:
     lines = f.readlines()
@@ -34,7 +30,7 @@ def send_code(in_session, rollcall_id):
                 "numberCode": pad(i)
             }
             try:
-                async with session.put(answer_url, json=payload, timeout=timeout) as r:
+                async with session.put(answer_url, json=payload) as r:
                     if r.status == 200:
                         stop_flag.set()
                         return pad(i)
@@ -46,7 +42,10 @@ def send_code(in_session, rollcall_id):
         stop_flag = asyncio.Event()
         sem = asyncio.Semaphore(200)
         timeout = aiohttp.ClientTimeout(total=5)
-        async with aiohttp.ClientSession(headers=headers, cookies=in_session.cookies) as session:
+        cookie_jar = CookieJar()
+        for c in in_session.cookies:
+            cookie_jar.update_cookies({c.name: c.value})
+        async with aiohttp.ClientSession(headers=in_session.headers, cookie_jar=cookie_jar) as session:
             tasks = [asyncio.create_task(put_request(i, session, stop_flag, url, sem, timeout)) for i in range(10000)]
             try:
                 for coro in asyncio.as_completed(tasks):
@@ -84,7 +83,7 @@ def send_radar(in_session, rollcall_id):
         "longitude": LONGITUDE,
         "speed": None
     }
-    res = requests.put(url, json=payload, headers=headers, cookies=in_session.cookies)
+    res = in_session.put(url, json=payload)
     if res.status_code == 200:
         print("Radar rollcall answered successfully.")
         return True
