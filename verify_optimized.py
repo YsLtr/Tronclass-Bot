@@ -711,34 +711,35 @@ def send_code_hybrid(rollcall_id, verified_cookies, course_name=None, course_id=
         thread_tasks.append((i, codes))
     
     # 使用线程池执行
-    with ThreadPoolExecutor(max_workers=num_threads) as executor:
-        # 提交任务到线程池
-        future_to_thread = {
-            executor.submit(thread_worker, thread_id, codes): thread_id
-            for thread_id, codes in thread_tasks
-        }
-        
-        # 等待第一个成功的结果
-        first_result = None
-        try:
-            for future in as_completed(future_to_thread):
-                result = future.result()
-                if result is not None and first_result is None:
-                    # 记录第一个成功的签到码
-                    first_result = result
-                    
-                    # 找到正确签到码，设置全局停止标志
-                    global_stop_event.set()
-                    
-                    # 取消其他未完成的任务
-                    for f in future_to_thread:
-                        if not f.done():
-                            f.cancel()
-                    break
-        except Exception as e:
-            print(f"线程池执行异常: {e}")
-        
-        return first_result
+    first_result = None
+    try:
+        with ThreadPoolExecutor(max_workers=num_threads) as executor:
+            # 提交任务到线程池
+            future_to_thread = {
+                executor.submit(thread_worker, thread_id, codes): thread_id
+                for thread_id, codes in thread_tasks
+            }
+            
+            # 等待第一个成功的结果
+            try:
+                for future in as_completed(future_to_thread):
+                    result = future.result()
+                    if result is not None and first_result is None:
+                        # 记录第一个成功的签到码
+                        first_result = result
+                        
+                        # 找到正确签到码，设置全局停止标志
+                        global_stop_event.set()
+                        
+                        # 取消其他未完成的任务
+                        for f in future_to_thread:
+                            if not f.done():
+                                f.cancel()
+                        break
+            except Exception as e:
+                print(f"线程池执行异常: {e}")
+    except Exception as e:
+        print(f"线程池创建异常: {e}")
     
     t01 = time.time()
     
