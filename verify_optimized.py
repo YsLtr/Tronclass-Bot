@@ -340,9 +340,9 @@ def send_radar(rollcall_id, verified_cookies, course_name=None, course_id=None):
         latitude, longitude = coord
         
         payload = {
-            "accuracy": 35,
+            "accuracy": 0,
             "altitude": 0,
-            "altitudeAccuracy": None,
+            "altitudeAccuracy": 0,
             "deviceId": str(uuid.uuid4()),
             "heading": None,
             "latitude": latitude,
@@ -354,65 +354,82 @@ def send_radar(rollcall_id, verified_cookies, course_name=None, course_id=None):
             print(f"尝试坐标 {i+1}/{len(coordinates)}: ({latitude}, {longitude})")
             res = requests.put(url, json=payload, headers=headers, cookies=verified_cookies, timeout=5)
             
-            # 解析响应中的距离数据
+            # 解析响应中的数据
             distance = None
+            status = None
+            status_name = None
+            checkin_id = None
+            
             if res.status_code == 200:
                 try:
                     response_data = res.json()
                     distance = response_data.get('distance')
+                    status = response_data.get('status')
+                    status_name = response_data.get('status_name')
+                    checkin_id = response_data.get('id')
+                    
                     if distance is not None:
                         print(f"  距离: {distance:.2f} 米")
+                    if status:
+                        print(f"  状态: {status} ({status_name})")
                 except Exception:
                     print("  无法解析响应数据")
                 
-                print(f"雷达签到成功! 使用坐标: ({latitude}, {longitude})")
-                
-                # 记录成功的签到
-                try:
-                    recorder = CheckinRecorder()
-                    recorder.add_record(
-                        course_name=course_name or "未知课程",
-                        course_id=course_id,
-                        rollcall_id=str(rollcall_id),
-                        checkin_code=None,  # 雷达签到没有签到码
-                        checkin_type="雷达签到",
-                        latitude=latitude,
-                        longitude=longitude,
-                        success=True,
-                        distance=distance
-                    )
-                except Exception as e:
-                    print(f"[记录器] 记录签到信息时出错: {str(e)}")
-                
-                return True
+                # 判断签到是否真正成功：HTTP 200 + 业务状态为on_call
+                if status == "on_call" or distance is not None:
+                    print(f"雷达签到成功! 使用坐标: ({latitude}, {longitude})")
+                    
+                    # 记录成功的签到
+                    try:
+                        recorder = CheckinRecorder()
+                        recorder.add_record(
+                            course_name=course_name or "未知课程",
+                            course_id=course_id,
+                            rollcall_id=str(rollcall_id),
+                            checkin_code=None,  # 雷达签到没有签到码
+                            checkin_type="雷达签到",
+                            latitude=latitude,
+                            longitude=longitude,
+                            success=True,
+                            distance=distance
+                        )
+                    except Exception as e:
+                        print(f"[记录器] 记录签到信息时出错: {str(e)}")
+                    
+                    return True
+                else:
+                    print(f"坐标 ({latitude}, {longitude}) 签到失败: 业务状态不正确")
             else:
                 # 尝试解析错误响应的距离数据
                 try:
                     error_data = res.json()
                     distance = error_data.get('distance')
+                    status = error_data.get('status')
                     if distance is not None:
                         print(f"  距离: {distance:.2f} 米 (超出范围)")
+                    if status:
+                        print(f"  状态: {status}")
                 except Exception:
                     pass
                 
                 print(f"坐标 ({latitude}, {longitude}) 签到失败: HTTP {res.status_code}")
-                
-                # 记录失败的尝试
-                try:
-                    recorder = CheckinRecorder()
-                    recorder.add_record(
-                        course_name=course_name or "未知课程",
-                        course_id=course_id,
-                        rollcall_id=str(rollcall_id),
-                        checkin_code=None,
-                        checkin_type="雷达签到",
-                        latitude=latitude,
-                        longitude=longitude,
-                        success=False,
-                        distance=distance
-                    )
-                except Exception as e:
-                    print(f"[记录器] 记录失败尝试时出错: {str(e)}")
+            
+            # 记录所有失败的尝试（HTTP错误或业务失败）
+            try:
+                recorder = CheckinRecorder()
+                recorder.add_record(
+                    course_name=course_name or "未知课程",
+                    course_id=course_id,
+                    rollcall_id=str(rollcall_id),
+                    checkin_code=None,
+                    checkin_type="雷达签到",
+                    latitude=latitude,
+                    longitude=longitude,
+                    success=False,
+                    distance=distance if distance is not None else None
+                )
+            except Exception as e:
+                print(f"[记录器] 记录失败尝试时出错: {str(e)}")
                 
         except Exception as e:
             print(f"坐标 ({latitude}, {longitude}) 请求失败: {str(e)}")
