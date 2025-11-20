@@ -88,7 +88,7 @@ while True:
                     failed_count = sum(1 for r in results if not r['success'])
                     if failed_count > 0:
                         print(f"签到完成，失败任务数: {failed_count}")
-                    temp_data = {'rollcalls': []}
+                    #temp_data = {'rollcalls': []}
         except Exception as e:
             print(time.strftime("%H:%M:%S", time.localtime()), ":发生错误", e)
 
