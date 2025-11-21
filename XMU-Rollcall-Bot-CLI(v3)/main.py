@@ -1,7 +1,14 @@
-import time
-# from login import login
-from tst_login import login
+import time, os, sys
+from xmulogin import xmulogin
 from misc import c, a, t
+
+base_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
+file_path = os.path.join(base_dir, "info.txt")
+
+with open(file_path, "r", encoding="utf-8") as f:
+    lines = f.readlines()
+    USERNAME = lines[0].strip()
+    pwd = lines[1].strip()
 
 interval = 1
 headers = {
@@ -20,7 +27,8 @@ rollcalls_url = f"{base_url}/api/radar/rollcalls"
 c()
 
 print("Welcome to XMU Rollcall Bot CLI!\nLogging you in...")
-session = login()
+# session = login()
+session = xmulogin(type=3, username=USERNAME, password=pwd)
 if not session:
     exit(1)
 profile = session.get(f"{base_url}/api/profile", headers=headers).json()
