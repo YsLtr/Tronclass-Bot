@@ -1,4 +1,4 @@
-# `XMU Rollcall Bot v3.0.0`
+# `XMU Rollcall Bot v3.0.1`
 
 > 对应目录: `XMU-Rollcall-Bot-CLI(v3)`
 
@@ -15,6 +15,20 @@
 <div align="center">
     <img src="XMU-Rollcall-Bot-CLI(v3)/screenshot.png" width="500">
 </div>
+
+> 为了进一步方便大家对厦门大学网站的各种开发，我制作了 `xmulogin` 包，大家可以直接 `pip install xmulogin` 使用。该包目前支持统一身份认证登录、教务系统登录和数字化教学平台登录。用法如下：
+> 
+> ```python
+> from xmulogin import xmulogin
+> 
+> # 登录统一身份认证系统 (type=1)
+> session = xmulogin(type=1, username="your_username", password="your_password")
+> # 登录教务系统 (type=2)
+> session = xmulogin(type=2, username="your_username", password="your_password")
+> # 登录数字化教学平台 (type=3)
+> session = xmulogin(type=3, username="your_username", password="your_password")
+>```
+>
 
 ## 1. Selenium 启动慢、启动难
 
