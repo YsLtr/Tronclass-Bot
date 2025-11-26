@@ -18,7 +18,9 @@
 > 
 > **[更新日志](ChangeLog.md)**
 > 
-> **[在 iOS 上运行本项目](https://krsmt.notion.site/mobile-ios)**
+> **[在 iOS 运行本项目](https://krsmt.notion.site/mobile-ios)**
+> 
+> **[在 Android 运行本项目]()**
 >
 > [查询你所在学校/单位的 Tronclass apiUrl](Tronclass-URL-list/result.csv)
 
