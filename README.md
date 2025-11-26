@@ -23,7 +23,7 @@
 ### ***此次更新基于大家使用过程中的所有反馈.***
 
 <div align="center">
-    <img src="XMU-Rollcall-Bot-CLI(v3)/screenshot.png" width="500">
+    <img src="v3.0.1/screenshot.png" width="500">
 </div>
 
 
