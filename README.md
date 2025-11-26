@@ -10,8 +10,6 @@
 
 ![Alt](https://repobeats.axiom.co/api/embed/6255c96e9f98ddf08155c6da04a9559213ba168d.svg "Repobeats analytics image")
 
-> 对应目录: `XMU-Rollcall-Bot-CLI(v3)`
-
 > **[下载工具](https://github.com/KrsMt-0113/XMU-Rollcall-Bot/releases)**
 >
 > **[移植文档](transplant.md)**
