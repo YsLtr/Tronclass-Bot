@@ -1,9 +1,10 @@
-import time, os, sys
+import time, os, sys, requests
 from xmulogin import xmulogin
-from misc import c, a, t
+from misc import c, a, t, l, v, s
 
 base_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
 file_path = os.path.join(base_dir, "info.txt")
+cookies = os.path.join(base_dir, "cookies.json")
 
 with open(file_path, "r", encoding="utf-8") as f:
     lines = f.readlines()
@@ -22,15 +23,28 @@ headers = {
     "Referer": "https://ids.xmu.edu.cn/authserver/login",
 }
 base_url = "https://lnt.xmu.edu.cn"
-
+session = None
 rollcalls_url = f"{base_url}/api/radar/rollcalls"
 c()
 
 print("Welcome to XMU Rollcall Bot CLI!\nLogging you in...")
-# session = login()
-session = xmulogin(type=3, username=USERNAME, password=pwd)
+
+if os.path.exists(cookies):
+    session_candidate = requests.Session()
+    if l(session_candidate, cookies):
+        profile = v(session_candidate)
+        if profile:
+            session = session_candidate
+
 if not session:
-    exit(1)
+    time.sleep(5)
+    session = xmulogin(type=3, username=USERNAME, password=pwd)
+    if session:
+        s(session, cookies)
+    else:
+        print("Login failed. Please check your credentials.")
+        time.sleep(5)
+        exit(1)
 profile = session.get(f"{base_url}/api/profile", headers=headers).json()
 name = profile["name"]
 

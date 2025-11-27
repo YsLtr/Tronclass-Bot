@@ -1,5 +1,14 @@
-import os, time
+import os, time, requests, json
 from verify import send_code, send_radar
+
+base_url = "https://lnt.xmu.edu.cn"
+headers = {
+    "User-Agent":(
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/120.0.0.0 Safari/537.36"
+    )
+}
 
 def a(data, session):
     data_empty = {'rollcalls': []}
@@ -79,3 +88,32 @@ def t(name):
     else:
         greeting = "Good evening"
     return f"{greeting}, {name}!"
+
+
+def s(sess: requests.Session, path: str):
+    try:
+        cj_divt = requests.utils.dict_from_cookiejar(sess.cookies)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(cj_divt, f)
+    except Exception:
+        pass
+
+def l(sess: requests.Session, path: str):
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            cj_dict = json.load(f)
+        sess.cookies = requests.utils.cookiejar_from_dict(cj_dict)
+        return True
+    except Exception:
+        return False
+
+def v(sess: requests.Session) -> dict:
+    try:
+        resp = sess.get(f"{base_url}/api/profile", headers=headers)
+        if resp.status_code == 200:
+            data = resp.json()
+            if isinstance(data, dict) and "name" in data:
+                return data
+    except Exception:
+        pass
+    return {}

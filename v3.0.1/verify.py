@@ -72,7 +72,7 @@ def send_code(in_session, rollcall_id):
     return asyncio.run(main())
 
 def send_radar(in_session, rollcall_id):
-    url = f"{base_url}/api/rollcall/{rollcall_id}/answer?api_version=1.76"
+    url = f"{base_url}/api/rollcall/{rollcall_id}/answer"
     payload = {
         "accuracy": 35,
         "altitude": 0,
