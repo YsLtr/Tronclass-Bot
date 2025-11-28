@@ -13,7 +13,7 @@
 </div>
 
 <div align="center">
-    <a href="https://github.com/KrsMt-0113/XMU-Rollcall-Bot/releases" style="font-size: 18px;">下载本工具</a>
+    <a href="https://github.com/KrsMt-0113/XMU-Rollcall-Bot/releases" style="font-size: 25px;">下载本工具</a>
 </div>
 
 <div align="center">
