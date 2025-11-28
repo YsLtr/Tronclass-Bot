@@ -1,5 +1,8 @@
-![XMU-Rollcall-Bot](https://socialify.git.ci/KrsMt-0113/XMU-Rollcall-Bot/image?font=JetBrains+Mono&forks=1&language=1&name=1&owner=1&pattern=Plus&stargazers=1&theme=Light)
+<div align="center">
 
+  <img src="https://socialify.git.ci/KrsMt-0113/XMU-Rollcall-Bot/image?font=JetBrains+Mono&forks=1&language=1&name=1&owner=1&pattern=Plus&stargazers=1&theme=Light" />
+
+</div>
 
 <div align="center">
 
@@ -9,9 +12,17 @@
 
 </div>
 
-![Alt](https://repobeats.axiom.co/api/embed/6255c96e9f98ddf08155c6da04a9559213ba168d.svg "Repobeats analytics image")
+<div align="center">
+    <a href="https://github.com/KrsMt-0113/XMU-Rollcall-Bot/releases" style="font-size: 18px;">下载本工具</a>
+</div>
 
-[![Star History Chart](https://api.star-history.com/svg?repos=KrsMt-0113/XMU-Rollcall-Bot&type=date&legend=top-left)](https://www.star-history.com/#KrsMt-0113/XMU-Rollcall-Bot&type=date&legend=top-left)
+<div align="center">
+    <img src="https://repobeats.axiom.co/api/embed/6255c96e9f98ddf08155c6da04a9559213ba168d.svg">
+</div>
+<div align="center">
+    <img src="https://api.star-history.com/svg?repos=KrsMt-0113/XMU-Rollcall-Bot&type=date&legend=top-left">
+</div>
+
 
 > **[下载工具](https://github.com/KrsMt-0113/XMU-Rollcall-Bot/releases)**
 >
