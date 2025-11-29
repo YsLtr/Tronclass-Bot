@@ -13,13 +13,6 @@
 </div>
 
 <div align="center">
-    <a href="https://github.com/KrsMt-0113/XMU-Rollcall-Bot/releases" style="font-size: 25px;">下载本工具</a>
-</div>
-
-<div align="center">
-    <img src="https://repobeats.axiom.co/api/embed/6255c96e9f98ddf08155c6da04a9559213ba168d.svg">
-</div>
-<div align="center">
     <img src="https://api.star-history.com/svg?repos=KrsMt-0113/XMU-Rollcall-Bot&type=date&legend=top-left">
 </div>
 
@@ -30,7 +23,7 @@
 > 
 > **[在 iOS 运行本项目](https://krsmt.notion.site/mobile-ios)**
 > 
-> **[在 Android 运行本项目]()**
+> **[在 Android 运行本项目](https://krsmt.notion.site/mobile-android)**
 >
 > [查询你所在学校/单位的 Tronclass apiUrl](Tronclass-URL-list/result.csv)
 
